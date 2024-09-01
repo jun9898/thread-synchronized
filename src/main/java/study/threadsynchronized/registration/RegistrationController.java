@@ -20,7 +20,7 @@ public class RegistrationController {
 	private final RegistrationService registrationService;
 
 	@PostMapping("/registration")
-	public RegistrationDTO classRegistration(@RequestBody RegistrationDTO registrationDTO) {
+	public RegistrationService.RegistrationResult classRegistration(@RequestBody RegistrationDTO registrationDTO) {
 		return registrationService.register(registrationDTO);
 	}
 

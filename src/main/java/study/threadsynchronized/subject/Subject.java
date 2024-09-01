@@ -34,4 +34,8 @@ public class Subject {
 
 	private Long maximumStudent;
 
+	public void addRegistration(Registration registration) {
+		this.registration.add(registration);
+	}
+
 }

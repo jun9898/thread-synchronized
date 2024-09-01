@@ -1,10 +1,8 @@
 package study.threadsynchronized.registration;
 
-import jakarta.persistence.Access;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,4 +29,14 @@ public class Registration {
 	@ManyToOne
 	@JoinColumn(name = "subject_id")
 	private Subject subject;
+
+	public static Registration of(Member member, Subject subject) {
+		Registration registration = Registration.builder()
+			.member(member)
+			.subject(subject)
+			.build();
+		member.addRegistration(registration);
+		subject.addRegistration(registration);
+		return registration;
+	}
 }

@@ -20,8 +20,13 @@ public class Member {
 
 	@Id
 	private Long id;
+	private String email;
 	@Builder.Default
 	@OneToMany(mappedBy = "member")
 	private List<Registration> registration = new ArrayList<>();
+
+	public void addRegistration(Registration registration) {
+		this.registration.add(registration);
+	}
 
 }

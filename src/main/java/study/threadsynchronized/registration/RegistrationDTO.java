@@ -14,7 +14,7 @@ import study.threadsynchronized.subject.SubjectName;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class RegistrationDTO {
-	private Long memberId;
+	private String memberEmail;
 	private SubjectName subjectName;
 
 

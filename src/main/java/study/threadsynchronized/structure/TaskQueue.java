@@ -4,38 +4,56 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TaskQueue {
-
 	private final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-	private final ExecutorService executor = Executors.newSingleThreadExecutor(); // 작업을 처리할 스레드 풀
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private final AtomicBoolean isProcessing = new AtomicBoolean(false);
 
 	public void addTask(Runnable task) {
-		Boolean result = taskQueue.add(task);
-		processTasks(); // 작업이 추가될 때마다 처리 시작
+		taskQueue.add(task);
+		processTasks();
 	}
 
 	private void processTasks() {
-		executor.submit(() -> {
-			while (!taskQueue.isEmpty()) {
+		if (isProcessing.compareAndSet(false, true)) {
+			executor.submit(() -> {
 				try {
-					Runnable task = taskQueue.take();
-					task.run();
+					while (!taskQueue.isEmpty()) {
+						Runnable task = taskQueue.take();
+						try {
+							task.run();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
+				} finally {
+					isProcessing.set(false);
+					if (!taskQueue.isEmpty()) {
+						processTasks(); // 작업이 남아있다면 다시 처리 시작
+					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 	public void shutdown() {
 		executor.shutdown();
-		while (!taskQueue.isEmpty()) {
+		while (!executor.isTerminated()) {
 			try {
-				Runnable task = taskQueue.take();
-				task.run();
+				Runnable task = taskQueue.poll();
+				if (task != null) {
+					task.run();
+				} else {
+					Thread.sleep(100); // 작업이 없으면 잠시 대기
+				}
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
+				break;
 			}
-		}	}
+		}
+	}
 }
