@@ -14,8 +14,14 @@ import study.threadsynchronized.subject.SubjectName;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class RegistrationDTO {
+
 	private String memberEmail;
 	private SubjectName subjectName;
 
-
+	public static RegistrationDTO create(String memberEmail, SubjectName subjectName) {
+		return RegistrationDTO.builder()
+				.memberEmail(memberEmail)
+				.subjectName(subjectName)
+				.build();
+	}
 }
