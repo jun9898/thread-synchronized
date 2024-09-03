@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import study.threadsynchronized.registration.RegistrationDTO;
 import study.threadsynchronized.registration.RegistrationResult;
-import study.threadsynchronized.registration.RegistrationService;
+import study.threadsynchronized.registration.RegistrationServiceSample;
 import study.threadsynchronized.subject.Subject;
 import study.threadsynchronized.subject.SubjectName;
 import study.threadsynchronized.subject.SubjectRepository;
@@ -25,7 +25,7 @@ import study.threadsynchronized.subject.SubjectRepository;
 public class RegistrationTest {
 
 	@Autowired
-	private RegistrationService registrationService;
+	private RegistrationServiceSample registrationServiceSample;
 
 	@Autowired
 	private SubjectRepository subjectRepository;
@@ -37,7 +37,7 @@ public class RegistrationTest {
 		RegistrationResult expected = RegistrationResult.success();
 
 		// when
-		RegistrationResult register = registrationService.register(singleRegistration);
+		RegistrationResult register = registrationServiceSample.register(singleRegistration);
 
 		// then
 		assertThat(register).isEqualTo(expected);
@@ -48,13 +48,13 @@ public class RegistrationTest {
 	@Rollback(true)
 	public void concurrentRegistrationsTest() throws InterruptedException, ExecutionException {
 		// given
-		List<RegistrationDTO> registrationRequests = IntStream.range(0, 50)
+		List<RegistrationDTO> registrationRequests = IntStream.range(0, 100)
 			.mapToObj(i -> RegistrationDTO.create("email" + i + "@example.com", SubjectName.COMPUTERSCIENCE))
 			.toList();
 
 		// when
 		List<CompletableFuture<RegistrationResult>> futures = registrationRequests.stream()
-			.map(request -> CompletableFuture.supplyAsync(() -> registrationService.register(request)))
+			.map(request -> CompletableFuture.supplyAsync(() -> registrationServiceSample.register(request)))
 			.toList();
 
 		List<RegistrationResult> results = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
