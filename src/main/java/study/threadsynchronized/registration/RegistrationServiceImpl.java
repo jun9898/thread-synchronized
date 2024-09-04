@@ -3,6 +3,7 @@ package study.threadsynchronized.registration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
 	// TaskQueue: 수강신청 요청을 순차적으로 처리하기 위한 큐
 	private final TaskQueue taskQueue = new TaskQueue();
+	private final ReentrantLock lock = new ReentrantLock();
 
 	// ConcurrentHashMap: 과목별 현재 수강신청 인원을 추적하는 스레드 안전 맵
 	// Key: 과목명, Value: 현재 수강신청 인원 (AtomicInteger)
@@ -75,7 +77,8 @@ public class RegistrationServiceImpl implements RegistrationService {
 		* 	일단 성공!!!!!!!!!!!!!
 		 * */
 		AtomicInteger currentCount;
-		synchronized (this) {
+		lock.unlock();
+		try {
 			// 과목의 현재 수강신청 인원 카운터 가져오기 (없으면 새로 생성)
 			currentCount = subjectCurrentCount.computeIfAbsent(
 				String.valueOf(subject.getSubjectName()), k -> new AtomicInteger(subject.getRegistration().size()));
@@ -85,6 +88,8 @@ public class RegistrationServiceImpl implements RegistrationService {
 				currentCount.decrementAndGet(); // 초과 시 다시 감소
 				return new RegistrationResult(false, "수강 신청 인원이 초과되었습니다.");
 			}
+		} finally {
+			lock.unlock();
 		}
 
 		try {
@@ -93,8 +98,11 @@ public class RegistrationServiceImpl implements RegistrationService {
 			registrationRepository.save(registration);
 			return new RegistrationResult(true, "수강 신청이 완료되었습니다.");
 		} catch (Exception e) {
-			synchronized (this) {
+			lock.lock();
+			try {
 				currentCount.decrementAndGet(); // 저장 실패 시 인원 감소
+			} finally {
+				lock.unlock();
 			}
 			throw e;
 		}
